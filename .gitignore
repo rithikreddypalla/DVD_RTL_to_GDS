@@ -1,0 +1,15 @@
+# Assignment handout (not part of the submission)
+RTL_to_GDS.pdf
+
+# Simulation / tool outputs (re-generable)
+sim
+gls
+*.vcd
+
+# LibreLane run folders are huge: never commit (assignment rule)
+pnr/runs/
+
+# Editor / OS
+.vscode/
+*.swp
+.DS_Store
