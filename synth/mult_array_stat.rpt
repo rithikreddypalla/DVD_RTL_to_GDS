@@ -1,0 +1,40 @@
+
+7. Printing statistics.
+
+=== mult_array ===
+
+        +----------Local Count, excluding submodules.
+        |        +-Local Area, excluding submodules.
+        |        | 
+       52        - wires
+       78        - wire bits
+       15        - public wires
+       41        - public wire bits
+        5        - ports
+       18        - port bits
+       61  756.976 cells
+        1    7.507   sky130_fd_sc_hd__a21boi_0
+        3   15.014   sky130_fd_sc_hd__a21oi_1
+        2   15.014   sky130_fd_sc_hd__a22oi_1
+        4   25.024   sky130_fd_sc_hd__and2_0
+        1    6.256   sky130_fd_sc_hd__and3_1
+        1    8.758   sky130_fd_sc_hd__and4_1
+        2    7.507   sky130_fd_sc_hd__clkinv_1
+       16  400.384   sky130_fd_sc_hd__dfrtp_1
+        2   12.512   sky130_fd_sc_hd__lpflow_isobufsrc_1
+        4   40.038   sky130_fd_sc_hd__maj3_1
+        7   26.275   sky130_fd_sc_hd__nand2_1
+        2    10.01   sky130_fd_sc_hd__nand3_1
+        2   12.512   sky130_fd_sc_hd__nand4_1
+        2    7.507   sky130_fd_sc_hd__nor2_1
+        1    8.758   sky130_fd_sc_hd__o2111ai_1
+        1    7.507   sky130_fd_sc_hd__o21bai_1
+        1    8.758   sky130_fd_sc_hd__o311ai_0
+        3   26.275   sky130_fd_sc_hd__xnor2_1
+        1   22.522   sky130_fd_sc_hd__xnor3_1
+        2   17.517   sky130_fd_sc_hd__xor2_1
+        3   71.318   sky130_fd_sc_hd__xor3_1
+
+   Chip area for module '\mult_array': 756.976000
+     of which used for sequential elements: 400.384000 (52.89%)
+
