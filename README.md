@@ -18,11 +18,13 @@ Verilog RTL through simulation, Yosys synthesis, OpenSTA timing and LibreLane pl
 | A | RTL simulation (IIC-OSIC-TOOLS) | `PASS: 256 vectors checked, 0 errors` |
 | A | Fault-injection test (`sum = a ^ b`) | `FAIL: 256 vectors checked, 95 errors`, then restored → PASS |
 | A | Hand-worked example (A = 12, B = 7) | Done, matches waveform (below) |
-| A | Waveform screenshot, block diagram | To be added to `report/report.pdf` |
+| A | Waveform screenshot, block diagram | In `report/report.pdf` (Figures 1 and 2) |
 | B | `synth/synth.tcl`, netlist, stat report | Done |
 | B | Gate-level simulation | `PASS: 256 vectors checked, 0 errors` |
 | C | `sta/sta.tcl`, timing report | Done: WNS = 7.213 ns at T = 10 ns, Tmin = 2.787 ns, Fmax = 358.81 MHz |
 | D | `pnr/config.json`, `metrics.json`, `mult_array.gds` | Done: CLOCK_PERIOD = 8.0 ns (run 10), setup WS = +0.362 ns, 0 DRC, 0 LVS |
+| D | Layout screenshots (whole die, zoomed rows and wires) | In `report/report.pdf` (Figures 3 and 4) |
+| Report | `report/report.pdf` | Done: Parts A–D, all result tables, answers to questions 1–6 (15 pages) |
 
 ## Repository layout
 
@@ -39,7 +41,7 @@ sta/mult_array_timing.rpt    critical path report (generated)
 pnr/config.json              LibreLane configuration
 pnr/metrics.json             metrics of the final run (copied from runs/<run>/final/)
 pnr/mult_array.gds           final layout (copied from runs/<run>/final/gds/)
-report/report.pdf            final report
+report/report.pdf            final report (pages 1-7 Parts A/B, pages 8-15 Parts C/D and questions 1-6)
 .dev/                        helper scripts (container launch, resource check)
 ```
 
@@ -380,7 +382,7 @@ arrival 7.643 ns in both), so 8.0 ns is the first period that covers it.
 | Core area (µm²) | 17 759.5 (die area 22 500 = 150 × 150) |
 | Cells after synthesis (from Part B) | 61 |
 | Cells after place and route | 1 884 (`design__instance__count`) |
-| Kinds of cells added | decap (1 299), fill (254), tap (245), buffers (17 `buf_2` + 4 `clkdlybuf4s*` timing/wire repair), clock buffers (3 `clkbuf_16`) |
+| Kinds of cells added | decap (1 299), fill (254), tap (245), buffers (17 `buf_2` port buffers + 4 `clkdlybuf4s*` repair buffers), clock buffers (3 `clkbuf_16`) |
 | Wirelength (µm) | 2 518 (detailed route) |
 | Setup slack (ns) | +0.362 (worst corner `max_ss_100C_1v60`); +4.222 in `nom_tt_025C_1v80` |
 | Post-route Fmax (MHz) | 1000 / (8.0 − 0.362) = **130.92** (all corners); 1000 / (8.0 − 4.222) = 264.72 (typical corner) |
@@ -401,7 +403,8 @@ Cell types in `runs/RUN_2026-10-23_23-44-39/final/def/mult_array.def`:
 | Decap | decap_3/4/6/8/12 | 1 299 | on-chip capacitance between VPWR and VGND that steadies the supply |
 | Fill | fill_1, fill_2 | 254 | close the gaps left in the rows so wells and rails are continuous |
 | Tap | tapvpwrvgnd_1 | 245 | tie n-well to VPWR and substrate to VGND (latch-up) |
-| Timing / wire repair buffers | buf_2 ×17, clkdlybuf4s25_1 ×2, clkdlybuf4s50_1 ×2 | 21 | drive port loads and long wires, fix slew/capacitance |
+| Port buffers | buf_2 ×17 (`input1`–`input9`, `output10`–`output17`) | 17 | isolate the 9 input and 8 output pins from the core logic and drive the output load |
+| Repair buffers | clkdlybuf4s50_1 ×2 (`fanout20/21`), clkdlybuf4s25_1 ×2 (`wire19`, `max_cap18`) | 4 | fix fanout, long-wire and max-capacitance violations |
 | Clock tree | clkbuf_16 | 3 | CTS: one root and two leaf buffers to drive the 16 flip-flop clock pins |
 
 1 884 − 61 = 1 823 cells were added; most of them are decap and fill, because the logic covers only
