@@ -340,8 +340,10 @@ LibreLane default for sky130A / `sky130_fd_sc_hd`.
 
 ```bash
 cd pnr
+# run 1 with "CLOCK_PERIOD": 3.5; before each later run CLOCK_PERIOD in config.json was
+# raised by 0.5 ns (4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0) and the same command re-run
 librelane config.json
-# after the passing run:
+# after the passing run (run 10, 8.0 ns):
 cp runs/RUN_2026-10-23_23-44-39/final/metrics.json .
 cp runs/RUN_2026-10-23_23-44-39/final/gds/mult_array.gds .
 klayout mult_array.gds
