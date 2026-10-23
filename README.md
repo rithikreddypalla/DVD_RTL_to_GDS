@@ -23,8 +23,8 @@ Verilog RTL through simulation, Yosys synthesis, OpenSTA timing and LibreLane pl
 | B | Gate-level simulation | `PASS: 256 vectors checked, 0 errors` |
 | C | `sta/sta.tcl`, timing report | Done: WNS = 7.213 ns at T = 10 ns, Tmin = 2.787 ns, Fmax = 358.81 MHz |
 | D | `pnr/config.json`, `metrics.json`, `mult_array.gds` | Done: CLOCK_PERIOD = 8.0 ns (run 10), setup WS = +0.362 ns, 0 DRC, 0 LVS |
-| D | Layout screenshots (whole die, zoomed rows and wires) | In `report/report.pdf` (Figures 3 and 4) |
-| Report | `report/report.pdf` | Done: Parts A–D, all result tables, answers to questions 1–6 (15 pages) |
+| D | Layout screenshots (whole die, zoomed rows and wires) | In `report/report.pdf` (Figure 4) |
+| Report | `report/report.pdf` | Done (LaTeX): Parts A–D, all result tables, answers to questions 1–6 |
 
 ## Repository layout
 
@@ -41,7 +41,7 @@ sta/mult_array_timing.rpt    critical path report (generated)
 pnr/config.json              LibreLane configuration
 pnr/metrics.json             metrics of the final run (copied from runs/<run>/final/)
 pnr/mult_array.gds           final layout (copied from runs/<run>/final/gds/)
-report/report.pdf            final report (pages 1-7 Parts A/B, pages 8-15 Parts C/D and questions 1-6)
+report/report.pdf            final report (LaTeX): Parts A-D, all result tables, answers to questions 1-6
 .dev/                        helper scripts (container launch, resource check)
 ```
 
