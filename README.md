@@ -21,7 +21,8 @@ Verilog RTL through simulation, Yosys synthesis, OpenSTA timing and LibreLane pl
 | A | Waveform screenshot, block diagram | To be added to `report/report.pdf` |
 | B | `synth/synth.tcl`, netlist, stat report | Done |
 | B | Gate-level simulation | `PASS: 256 vectors checked, 0 errors` |
-| C, D | `sta/`, `pnr/` | Teammate |
+| C | `sta/sta.tcl`, timing report | Done: WNS = 7.213 ns at T = 10 ns, Tmin = 2.787 ns, Fmax = 358.81 MHz |
+| D | `pnr/` | In progress |
 
 ## Repository layout
 
@@ -33,7 +34,8 @@ tb/tb_mult.v                 exhaustive self-checking testbench (256 vectors)
 synth/synth.tcl              Yosys script
 synth/mult_array_netlist.v   gate-level netlist (generated)
 synth/mult_array_stat.rpt    cell/area report (generated)
-sta/                         Part C
+sta/sta.tcl                  OpenSTA script
+sta/mult_array_timing.rpt    critical path report (generated)
 pnr/                         Part D
 report/report.pdf            final report
 .dev/                        helper scripts (container launch, resource check)
@@ -250,6 +252,77 @@ Logic cells (excluding flip-flops): 61 − 16 = 45. Full cell list:
 | nor2_1 | 2 | 7.507 |
 | xor2_1 | 2 | 17.517 |
 | a21boi_0, and3_1, and4_1, o2111ai_1, o21bai_1, o311ai_0, xnor3_1 | 1 each | 7.507, 6.256, 8.758, 8.758, 7.507, 8.758, 22.522 |
+
+---
+
+## Part C — Static timing analysis with OpenSTA
+
+`sta/sta.tcl` reads the same typical-corner Liberty file, reads and links
+`synth/mult_array_netlist.v`, creates `clk` with period T, sets a 1.0 ns input delay on every
+input except `clk` and a 1.0 ns output delay on every output, prints the worst setup slack
+(`report_worst_slack -max -digits 3`) and writes `report_checks -path_delay max -digits 3` to
+`sta/mult_array_timing.rpt`. T is 10 ns unless the environment variable `STA_PERIOD` is set.
+
+```bash
+sta sta/sta.tcl                       # T = 10 ns
+STA_PERIOD=2.79 sta sta/sta.tcl       # T = Tmin, rounded to 0.01 ns (this run wrote the committed report)
+```
+
+Output:
+
+```text
+Clock period T = 10.0 ns
+worst slack max 7.213
+Clock period T = 2.79 ns
+worst slack max 0.003
+```
+
+Tmin = T − WNS = 10 − 7.213 = **2.787 ns**, Fmax = 1000 / 2.787 = **358.81 MHz**.
+At T = 2.79 ns the slack is +0.003 ns, i.e. the path just fits, which confirms Tmin.
+
+### Critical path (from `sta/mult_array_timing.rpt`)
+
+Start point `_91_` = flip-flop **`a_r[1]`** (its D pin is `a[1]`); end point `_88_` = flip-flop
+**`p[6]`** (its D pin is `fa3_3.sum`). The netlist instance names were mapped back to the RTL by
+reading `synth/mult_array_netlist.v`.
+
+| # | Instance | Cell | Delay (ns) | Arrival (ns) | Function in the array |
+|---|---|---|---|---|---|
+| 1 | `_91_` | dfrtp_1 | 0.398 | 0.398 | launch flip-flop `a_r[1]`, CLK → Q |
+| 2 | `_37_` | clkinv_1 | 0.073 | 0.471 | `~a_r[1]`, input of the merged row-1 logic |
+| 3 | `_42_` | o311ai_0 | 0.356 | 0.827 | row 1: part of `s1[1]` (fa1_1 sum, with pp0[2], pp1[1] and the fa1_0 carry folded in) |
+| 4 | `_45_` | a21oi_1 | 0.153 | 0.980 | row 2: `c2[1]` = pp2[0] AND r1[0] (fa2_0 carry; a half adder because c2[0] = 0) |
+| 5 | `_51_` | maj3_1 | 0.402 | 1.382 | row 2: `c2[2]` (fa2_1 carry) |
+| 6 | `_58_` | xnor3_1 | 0.370 | 1.752 | row 2: `s2[2]` = r2[1] (fa2_2 sum) |
+| 7 | `_61_` | maj3_1 | 0.368 | 2.119 | row 3: `c3[2]` (fa3_1 carry) |
+| 8 | `_63_` | maj3_1 | 0.354 | 2.474 | row 3: `c3[3]` (fa3_2 carry) |
+| 9 | `_64_` | xor3_1 | 0.178 | 2.652 | row 3: `s3[3]` = p[6] (fa3_3 sum) |
+| 10 | `_88_` | dfrtp_1 | setup 0.135 | — | capture flip-flop `p[6]` |
+
+Data arrival 2.652 ns + setup 0.135 ns = 2.787 ns = Tmin.
+
+**Cells on the path:** 10 (2 flip-flops + 8 logic cells). All 8 logic cells implement full-adder
+logic (with the AND gates of the partial products merged in by ABC). The path crosses
+**7 full-adder stages** — fa1_1 → fa2_0 → fa2_1 → fa2_2 → fa3_1 → fa3_2 → fa3_3 — against the
+estimate of about 2N = 8. It is slightly shorter because the first adder of each row has a
+constant 0 carry-in (a half adder), and ABC folded row 0/row 1 into compound gates.
+
+The second path group in the report, `asynchronous`, is the reset recovery check
+(`rst_n` → `RESET_B` of `_82_`, slack 2.018 ns at T = 2.79 ns); it does not limit Fmax.
+
+### Results
+
+| Metric | Value |
+|---|---|
+| Worst slack at T = 10 ns (ns) | 7.213 |
+| Tmin (ns) | 2.787 (rounded: 2.79) |
+| Fmax (MHz) | 358.81 |
+| Slack at T = Tmin = 2.79 ns (ns) | 0.003 |
+| Critical path start point | `_91_` = `a_r[1]` (dfrtp_1, CLK) |
+| Critical path end point | `_88_` = `p[6]` (dfrtp_1, D) |
+| Number of cells on the critical path | 10 (2 flip-flops + 8 logic cells) |
+| Latency (ns) = 2 × Tmin | 5.574 |
+| Throughput (million results per second) | 358.81 (one result per cycle) |
 
 ---
 
